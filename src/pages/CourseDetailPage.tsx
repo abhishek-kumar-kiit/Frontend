@@ -1,6 +1,6 @@
-// src/pages/CourseDetailPage.tsx
+  // src/pages/CourseDetailPage.tsx
 
-import  { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import {
   getCourseById,
@@ -16,6 +16,9 @@ import {
   CheckCircleIcon,
   PlayCircleIcon,
   LockClosedIcon,
+  AcademicCapIcon,
+  ClockIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import ReactMarkdown from "react-markdown";
 import DOMPurify from "dompurify";
@@ -101,16 +104,13 @@ const CourseDetailPage = () => {
     }
   };
 
-  // Helper function to check if URL is YouTube or Vimeo
   const getEmbedUrl = (url: string, videoType?: string) => {
     if (videoType === 'link') {
-      // YouTube
       const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
       if (youtubeMatch) {
         return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
       }
       
-      // Vimeo
       const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
       if (vimeoMatch) {
         return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
@@ -150,6 +150,11 @@ const CourseDetailPage = () => {
     }
   };
 
+  // Calculate progress
+  const completedLessons = lessons.filter(l => l.isCompleted).length;
+  const totalLessons = lessons.length;
+  const progressPercentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+
   if (isLoading)
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -173,54 +178,110 @@ const CourseDetailPage = () => {
       </div>
     );
   if (error)
-    return <p className="text-center text-red-500 py-10">Error: {error}</p>;
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg max-w-md">
+          <p className="text-red-700 font-semibold">Error Loading Course</p>
+          <p className="text-red-600 mt-2">{error}</p>
+        </div>
+      </div>
+    );
   if (!course)
-    return <p className="text-center py-10 text-gray-600">Course not found.</p>;
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="text-center">
+          <p className="text-gray-600 text-lg">Course not found.</p>
+          <Link to="/courses" className="mt-4 inline-block text-blue-600 hover:text-blue-800 font-medium">
+            ← Back to Courses
+          </Link>
+        </div>
+      </div>
+    );
 
-  // User role checks
   const isInstructorOwner =
     user?.role === "Instructor" && user?._id === course.instructor._id;
   const isEnrolledStudent = user?.role === "Student" && course.enrollment;
   const isStudent = user?.role === "Student";
-  
-  // Video access: Owner instructors and enrolled students can watch
   const canWatchVideo = isInstructorOwner || isEnrolledStudent;
 
   if (!course.isActive && !isInstructorOwner) {
     return (
-      <div className="text-center py-16">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">
-          Course Unavailable
-        </h1>
-        <p className="text-lg text-gray-600">
-          This course is no longer active and cannot be accessed.
-        </p>
-        <Link
-          to="/courses"
-          className="mt-6 inline-block bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition"
-        >
-          ← Back to All Courses
-        </Link>
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="text-center max-w-lg bg-white rounded-2xl shadow-xl p-12">
+          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <LockClosedIcon className="w-10 h-10 text-gray-400" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-3">
+            Course Unavailable
+          </h1>
+          <p className="text-gray-600 mb-8">
+            This course is no longer active and cannot be accessed.
+          </p>
+          <Link
+            to="/courses"
+            className="inline-block bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-3 px-8 rounded-lg hover:opacity-90 transition shadow-lg hover:shadow-xl"
+          >
+            ← Back to All Courses
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-extrabold text-gray-800 mb-2">
-          {course.title}
-        </h1>
-        <p className="text-gray-600">{course.description}</p>
-        <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-          <span className="font-medium">Instructor:</span>
-          <span className="text-gray-700">{course.instructor.name}</span>
-          {isInstructorOwner && (
-            <span className="ml-2 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
-              Your Course
-            </span>
-          )}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      {/* Enhanced Header with Gradient Background */}
+      <div className="mb-8 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-8 shadow-sm border border-blue-100">
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-3 leading-tight">
+              {course.title}
+            </h1>
+            <p className="text-gray-700 text-lg leading-relaxed mb-4">{course.description}</p>
+            
+            {/* Instructor and Badge */}
+            <div className="flex items-center flex-wrap gap-4">
+              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
+                <AcademicCapIcon className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium text-gray-600">Instructor:</span>
+                <span className="text-sm font-semibold text-gray-900">{course.instructor.name}</span>
+              </div>
+              
+              {isInstructorOwner && (
+                <span className="bg-gradient-to-r from-green-400 to-emerald-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-md">
+                  ✨ Your Course
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Course Stats */}
+          <div className="flex flex-col gap-3 bg-white rounded-xl p-4 shadow-sm border border-gray-200 min-w-[200px]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <ClockIcon className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Total Lessons</p>
+                <p className="text-xl font-bold text-gray-900">{totalLessons}</p>
+              </div>
+            </div>
+            {isEnrolledStudent && totalLessons > 0 && (
+              <div className="pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-gray-600">Progress</span>
+                  <span className="text-xs font-bold text-blue-600">{Math.round(progressPercentage)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-500"
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">{completedLessons} of {totalLessons} completed</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -282,13 +343,13 @@ const CourseDetailPage = () => {
         }
       `}</style>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Video Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Enhanced Video Section */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-shadow duration-300">
             {selectedLesson ? (
               <>
-                <div className="aspect-video bg-black relative">
+                <div className="aspect-video bg-gradient-to-br from-gray-900 to-gray-800 relative">
                   {canWatchVideo ? (
                     renderVideoPlayer(selectedLesson)
                   ) : (
@@ -296,31 +357,54 @@ const CourseDetailPage = () => {
                       <img
                         src={course.imageUrl}
                         alt={course.title}
-                        className="w-full h-full object-cover opacity-40"
+                        className="w-full h-full object-cover opacity-30"
                       />
-                      <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-4 bg-black/60">
-                        <LockClosedIcon className="w-16 h-16 text-white mb-4" />
-                        <h3 className="text-2xl font-bold text-white mb-2">
-                          Content Locked
-                        </h3>
-                        <p className="text-gray-200 text-base max-w-md">
-                          {isAuthenticated
-                            ? "Enroll in this course to watch lessons."
-                            : "Please log in and enroll to access this content."}
-                        </p>
+                      <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-6 bg-gradient-to-t from-black/80 to-black/40">
+                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 max-w-md border border-white/20">
+                          <LockClosedIcon className="w-16 h-16 text-white mb-4 mx-auto" />
+                          <h3 className="text-2xl font-bold text-white mb-3">
+                            Content Locked
+                          </h3>
+                          <p className="text-gray-200 text-base leading-relaxed">
+                            {isAuthenticated
+                              ? "Enroll in this course to unlock all video lessons and start learning."
+                              : "Please log in and enroll to access this exclusive content."}
+                          </p>
+                        </div>
                       </div>
                     </>
                   )}
                 </div>
 
-                {/* Lesson Details */}
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold mb-2 text-gray-800">
-                    {selectedLesson.title}
-                  </h2>
+                {/* Enhanced Lesson Details */}
+                <div className="p-6 sm:p-8">
+                  <div className="flex items-start justify-between mb-4">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex-1">
+                      {selectedLesson.title}
+                    </h2>
+                    {isEnrolledStudent && (
+                      <div className={`ml-4 flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                        selectedLesson.isCompleted 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {selectedLesson.isCompleted ? (
+                          <>
+                            <CheckCircleIcon className="w-4 h-4" />
+                            <span>Done</span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-4 h-4 border-2 border-gray-400 rounded-full"></div>
+                            <span>Pending</span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   
-                  {/* Description with View More */}
-                  <div className={`text-gray-700 mb-4 transition-all duration-300 ${
+                  {/* Enhanced Description with View More */}
+                  <div className={`text-gray-700 mb-6 transition-all duration-300 ${
                     showFullDescription ? 'max-h-none' : 'max-h-[200px] overflow-hidden relative'
                   }`}>
                     <div className={`prose prose-sm max-w-none prose-html ${
@@ -359,28 +443,28 @@ const CourseDetailPage = () => {
                       )}
                     </div>
                     {!showFullDescription && (
-                      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"></div>
                     )}
                   </div>
 
-                  {/* View More Button */}
+                  {/* Enhanced View More Button */}
                   {selectedLesson.content && selectedLesson.content.length > 300 && (
                     <button
                       type="button"
                       onClick={() => setShowFullDescription(!showFullDescription)}
-                      className="mb-4 text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center gap-1 transition"
+                      className="mb-6 text-blue-600 hover:text-blue-800 font-semibold text-sm flex items-center gap-2 transition-all duration-200 hover:gap-3 group"
                     >
                       {showFullDescription ? (
                         <>
-                          View Less
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <span>View Less</span>
+                          <svg className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                           </svg>
                         </>
                       ) : (
                         <>
-                          View More
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <span>View More</span>
+                          <svg className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </>
@@ -388,137 +472,194 @@ const CourseDetailPage = () => {
                     </button>
                   )}
 
-                  {/* Mark Complete Button - Only for enrolled students */}
+                  {/* Enhanced Mark Complete Button */}
                   {isEnrolledStudent && (
                     <button
                       onClick={handleMarkComplete}
                       disabled={selectedLesson.isCompleted || isMarking}
-                      className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 ${
+                      className={`w-full py-4 rounded-xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl disabled:cursor-not-allowed ${
                         selectedLesson.isCompleted
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:opacity-90"
+                          ? "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
+                          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 active:scale-[0.98]"
                       }`}
                     >
-                      {isMarking
-                        ? "Marking..."
-                        : selectedLesson.isCompleted
-                        ? "✓ Completed"
-                        : "Mark as Complete"}
+                      {isMarking ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Marking...
+                        </span>
+                      ) : selectedLesson.isCompleted ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <CheckCircleIcon className="w-6 h-6" />
+                          Lesson Completed
+                        </span>
+                      ) : (
+                        "Mark as Complete"
+                      )}
                     </button>
                   )}
                 </div>
               </>
             ) : (
-              <p className="p-6 text-center text-gray-500">
-                This course has no lessons yet.
-              </p>
+              <div className="p-12 text-center">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <PlayCircleIcon className="w-10 h-10 text-gray-400" />
+                </div>
+                <p className="text-gray-500 text-lg">This course has no lessons yet.</p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Sidebar Section */}
+        {/* Enhanced Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl shadow-md p-5 space-y-4">
-            {/* Action Buttons - Based on User Role */}
-            {(() => {
-              // Owner Instructor - Show manage button
-              if (isInstructorOwner) {
-                return (
-                  <Link
-                    to={`/instructor/courses/${course._id}/students`}
-                    className="block w-full text-center bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition"
-                  >
-                    View Enrolled Students
-                  </Link>
-                );
-              }
-
-              // Not authenticated - Show login button
-              if (!isAuthenticated) {
-                return (
-                  <Link
-                    to="/login"
-                    className="block w-full text-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition"
-                  >
-                    Login to Enroll
-                  </Link>
-                );
-              }
-
-              // Enrolled Student - Show enrolled status
-              if (course.enrollment) {
-                return (
-                  <div className="p-3 bg-green-100 text-green-700 text-center rounded-md font-semibold flex items-center justify-center gap-2">
-                    <CheckCircleIcon className="h-5 w-5" />
-                    You are enrolled
-                  </div>
-                );
-              }
-
-              // Student (not enrolled) - Show enroll button
-              if (isStudent) {
-                return (
-                  <>
-                    <button
-                      onClick={handleEnroll}
-                      disabled={isEnrolling}
-                      className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden sticky top-6">
+            {/* Action Buttons Section */}
+            <div className="p-6 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100">
+              {(() => {
+                if (isInstructorOwner) {
+                  return (
+                    <Link
+                      to={`/instructor/courses/${course._id}/students`}
+                      className="block w-full text-center bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 rounded-xl hover:from-purple-600 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98]"
                     >
-                      {isEnrolling ? "Enrolling..." : "Enroll Now"}
-                    </button>
-                    {enrollmentError && (
-                      <p className="text-red-500 text-sm">{enrollmentError}</p>
-                    )}
-                  </>
-                );
-              }
-
-              return null;
-            })()}
-
-            {/* Lessons List */}
-            <h3 className="text-xl font-bold border-b pb-2 text-gray-800 pt-2">
-              Course Lessons
-            </h3>
-            <div className="max-h-[600px] overflow-y-auto pr-1 space-y-2">
-              {lessons.length > 0 ? (
-                lessons.map((lesson) => (
-                  <button
-                    key={lesson._id}
-                    onClick={() => setSelectedLesson(lesson)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg transition ${
-                      selectedLesson?._id === lesson._id
-                        ? "bg-blue-100 border-l-4 border-blue-500"
-                        : "hover:bg-gray-100"
-                    }`}
-                  >
-                    <div className="flex items-center flex-1 min-w-0">
-                      <PlayCircleIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium text-left truncate">
-                        {lesson.title}
+                      <span className="flex items-center justify-center gap-2">
+                        <UserGroupIcon className="w-5 h-5" />
+                        View Enrolled Students
                       </span>
+                    </Link>
+                  );
+                }
+
+                if (!isAuthenticated) {
+                  return (
+                    <Link
+                      to="/login"
+                      className="block w-full text-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-4 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98]"
+                    >
+                      Login to Enroll
+                    </Link>
+                  );
+                }
+
+                if (course.enrollment) {
+                  return (
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 text-center rounded-xl font-bold flex items-center justify-center gap-2 border-2 border-green-200">
+                      <CheckCircleIcon className="h-6 w-6" />
+                      You're Enrolled!
                     </div>
-                    {isEnrolledStudent &&
-                      (lesson.isCompleted ? (
-                        <CheckCircleIcon
-                          className="h-5 w-5 text-green-500 flex-shrink-0 ml-2"
-                          title="Completed"
-                        />
-                      ) : (
-                        <div
-                          className="h-5 w-5 border-2 border-gray-300 rounded-full flex-shrink-0 ml-2"
-                          title="Not Completed"
-                        ></div>
-                      ))}
-                  </button>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-4">No lessons available.</p>
-              )}
+                  );
+                }
+
+                if (isStudent) {
+                  return (
+                    <div className="space-y-3">
+                      <button
+                        onClick={handleEnroll}
+                        disabled={isEnrolling}
+                        className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-4 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed shadow-lg hover:shadow-xl active:scale-[0.98]"
+                      >
+                        {isEnrolling ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Enrolling...
+                          </span>
+                        ) : (
+                          "Enroll Now"
+                        )}
+                      </button>
+                      {enrollmentError && (
+                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200">
+                          {enrollmentError}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return null;
+              })()}
+            </div>
+
+            {/* Lessons List Section */}
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full"></div>
+                Course Lessons
+              </h3>
+              <div className="max-h-[600px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                {lessons.length > 0 ? (
+                  lessons.map((lesson, index) => (
+                    <button
+                      key={lesson._id}
+                      onClick={() => setSelectedLesson(lesson)}
+                      className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${
+                        selectedLesson?._id === lesson._id
+                          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-500 shadow-md"
+                          : "hover:bg-gray-50 border-2 border-transparent hover:border-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-center flex-1 min-w-0 gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-sm ${
+                          selectedLesson?._id === lesson._id
+                            ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
+                            : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <span className={`font-medium text-left truncate ${
+                          selectedLesson?._id === lesson._id
+                            ? "text-gray-900"
+                            : "text-gray-700"
+                        }`}>
+                          {lesson.title}
+                        </span>
+                      </div>
+                      {isEnrolledStudent &&
+                        (lesson.isCompleted ? (
+                          <CheckCircleIcon
+                            className="h-6 w-6 text-green-500 flex-shrink-0 ml-2"
+                            title="Completed"
+                          />
+                        ) : (
+                          <div
+                            className="h-6 w-6 border-2 border-gray-300 rounded-full flex-shrink-0 ml-2 group-hover:border-gray-400"
+                            title="Not Completed"
+                          ></div>
+                        ))}
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <PlayCircleIcon className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500">No lessons available yet.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Custom Scrollbar Styles */}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(to bottom, #3b82f6, #6366f1);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(to bottom, #2563eb, #4f46e5);
+        }
+      `}</style>
     </div>
   );
 };

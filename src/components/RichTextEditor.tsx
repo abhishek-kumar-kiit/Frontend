@@ -1,4 +1,4 @@
-// src/components/RichTextEditor.tsx
+ // src/components/RichTextEditor.tsx
 
 import React, { useState, useMemo } from 'react';
 import SimpleMDE from 'react-simplemde-editor';
@@ -60,7 +60,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         'fullscreen',
         '|',
         'guide',
-      ],
+      ] as any,
     };
   }, [placeholder]);
 

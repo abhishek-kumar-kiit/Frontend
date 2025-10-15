@@ -5,7 +5,7 @@ import { getAllCourses } from "../services/courseService";
 import { useAuth } from "../contexts/AuthContext";
 import type { Course } from "../types";
 import CourseCard from "../components/CourseCard";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 
 const CoursesListPage = () => {
   const { token } = useAuth();

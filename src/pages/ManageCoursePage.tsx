@@ -186,13 +186,13 @@ const ManageCoursePage = () => {
           {lessons.length > 0 ? (
             <div className="p-6">
               <div className="space-y-3">
-                {lessons
-                  .sort((a, b) => a.order - b.order)
-                  .map((lesson, index) => (
-                    <div
-                      key={lesson._id}
-                      className="group flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100/50 border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition-all"
-                    >
+              {lessons
+  .sort((a, b) => a.order - b.order)
+  .map((lesson) => (
+    <div
+      key={lesson._id}
+      className="group flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100/50 border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition-all"
+    >
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-lg flex items-center justify-center font-semibold text-sm">
                           {lesson.order}
